@@ -15,7 +15,7 @@ car_data = pd.read_csv("vehicles_us.csv")
 # =====================
 # Panel: Data viewer
 # =====================
-st.subheader("Data viewer")
+st.subheader("🔎 Data viewer")
 
 # Lugar donde mostraremos el botón arriba del panel
 dl_placeholder = st.container()
@@ -74,13 +74,80 @@ else:
     mask = (df_price["price"] >= rango[0]) & (df_price["price"] <= rango[1])
     df_plot = df_price.loc[mask]
 
-    # Histograma simple
-    fig = px.histogram(
-        df_plot,
-        x="price",
-        nbins=bins,
-        title=None,
-    )
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+    # Botón para construir el histograma
+    if st.button("Construir histograma"):
+        st.write("Histograma de precios")
+        fig = px.histogram(
+            df_plot,
+            x="price",
+            nbins=bins,
+            title=None,
+        )
+        fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Ajusta los filtros y pulsa **Construir histograma** para ver el gráfico.")
 
-    st.plotly_chart(fig, use_container_width=True)
+
+# Panel 3: Dispersión (price vs odometer)
+# ================================
+st.subheader("📈 Dispersión: precio vs odómetro")
+
+# Datos válidos para el scatter
+df_scatter = car_data.dropna(subset=["price", "odometer"]).copy()
+if df_scatter.empty:
+    st.warning("No hay filas con 'price' y 'odometer' para graficar.")
+else:
+    # Rangos para filtrar
+    odo_min, odo_max = int(df_scatter["odometer"].min()), int(df_scatter["odometer"].max())
+    prc_min, prc_max = int(df_scatter["price"].min()), int(df_scatter["price"].max())
+
+    st.caption("Filtra el rango antes de graficar (útil para quitar outliers extremos).")
+    c1, c2 = st.columns(2)
+    with c1:
+        rango_odo = st.slider(
+            "Rango de odómetro (km)",
+            min_value=odo_min, max_value=odo_max,
+            value=(odo_min, odo_max),
+            step=max(1, (odo_max - odo_min) // 100)
+        )
+    with c2:
+        rango_price = st.slider(
+            "Rango de precio",
+            min_value=prc_min, max_value=prc_max,
+            value=(prc_min, prc_max),
+            step=max(1, (prc_max - prc_min) // 100)
+        )
+
+    # Filtro por rangos
+    mask = (
+        (df_scatter["odometer"].between(rango_odo[0], rango_odo[1])) &
+        (df_scatter["price"].between(rango_price[0], rango_price[1]))
+    )
+    df_plot = df_scatter.loc[mask]
+
+    # Color opcional para facilitar lectura
+    color_by = st.selectbox(
+        "Color por (opcional)",
+        options=["(ninguno)", "condition", "type", "fuel", "transmission"],
+        index=0
+    )
+    color_kw = {} if color_by == "(ninguno)" else {"color": color_by}
+
+    # Botón para construir la dispersión
+    if st.button("Construir dispersión"):
+        st.write("Dispersión: odómetro vs precio")
+        fig = px.scatter(
+            df_plot,
+            x="odometer", y="price",
+            hover_data=["model", "model_year", "condition", "type"],
+            opacity=0.6,
+            height=520,
+            **color_kw
+        )
+        fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+        fig.update_xaxes(title="Odómetro (km)")
+        fig.update_yaxes(title="Precio")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Ajusta los filtros y pulsa **Construir dispersión** para ver el gráfico.")
