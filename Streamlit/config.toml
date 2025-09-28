@@ -1,0 +1,8 @@
+# .streamlit/config.toml
+[theme]
+base = "light"                          # "light" o "dark"
+primaryColor = "#2563EB"              # Azul (Tailwind blue-600)
+backgroundColor = "#FFFFFF"           # Fondo principal
+secondaryBackgroundColor = "#F6F9FC"  # Paneles / expander
+textColor = "#0F172A"                 # Texto principal
+font = "sans serif"                     # "sans serif" | "serif" | "monospace"
